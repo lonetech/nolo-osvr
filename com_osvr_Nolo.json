@@ -1,23 +1,106 @@
 {
-  "deviceVendor": "OSVR",
-  "deviceName": "Comprehensive Plugin Example",
-  "author": "Ryan Pavlik <ryan@sensics.com>",
+  "deviceVendor": "LYRobotix",
+  "deviceName": "NOLO",
+  "author": "Yann Vernier <yann-osvr-nolo@vernier.se>",
   "version": 1,
-  "lastModified": "2015-01-30T21:13:07.585Z",
+  "lastModified": "2017-06-25T18:11:39.465Z",
   "interfaces": {
+    "tracker": {
+      "bounded": true,
+      "position": true,
+      "orientation": true,
+      "count": 3
+    },
     "analog": {
-      "count": 1,
+      "count": 7,
       "traits": [
         {
           "min": 0,
-          "max": 10
+          "max": 255,
+          "rest": 255
+        },
+        {
+          "min": 0,
+          "max": 255,
+          "rest": 255
+        },
+        {
+          "min": 0,
+          "max": 100,
+          "rest": 100
+        },
+        {
+          "min": 0,
+          "max": 255,
+          "rest": 255
+        },
+        {
+          "min": 0,
+          "max": 255,
+          "rest": 255
+        },
+        {
+          "min": 0,
+          "max": 100,
+          "rest": 100
+        },
+        {
+          "min": 0,
+          "max": 100,
+          "rest": 100
         }
       ]
+    },
+    "button": {
+      "count": 12
     }
   },
-  "semantics": {
-    "value": {
-      "$target": "analog/0"
+  "semantic": {
+    "hmd": {
+      "$target": "tracker/0"
+    },
+    "controller": {
+      "left": {
+        "$target": "tracker/1",
+        "system": "button/3",
+        "menu": "button/2",
+        "grip": "button/4",
+        "trackpad": {
+          "x": "analog/0",
+          "y": "analog/1",
+          "touch": "button/5",
+          "button": "button/0"
+        },
+        "trigger": {
+          "button": "button/1"
+        },
+        "battery": "analog/2"
+      },
+      "right": {
+        "$target": "tracker/2",
+        "system": "button/10",
+        "menu": "button/9",
+        "grip": "button/11",
+        "trackpad": {
+          "x": "analog/3",
+          "y": "analog/4",
+          "touch": "button/12",
+          "button": "button/7"
+        },
+        "trigger": {
+          "button": "button/8"
+        },
+        "battery": "analog/5"
+      }
+    },
+    "base": {
+      "battery": "analog/6"
     }
+  },
+  "automaticAliases": {
+    "/me/head": "semantic/hmd",
+    "/controller": "semantic/controller/*",
+    "/me/hands/left": "semantic/controller/left",
+    "/me/hands/right": "semantic/controller/right"
   }
 }
