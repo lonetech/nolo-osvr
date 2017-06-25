@@ -44,6 +44,24 @@ namespace {
   // btea_decrypt function
   #include "btea.c"
 
+  #if 0
+  void hexdump(unsigned char *data, int len) {
+    char fill = std::cout.fill();
+    std::streamsize w = std::cout.width();
+    std::ios_base::fmtflags f = std::cout.flags();
+    for (int i=0; i<len; i++) {
+      std::cout << std::setw(2) << std::setfill('0')
+		<< std::hex << (int)data[i];
+      if (i%8==7)
+	std::cout << " ";
+    }
+    std::cout << std::endl;
+    std::cout.fill(fill);
+    std::cout.width(w);
+    std::cout.flags(f);
+  };
+  #endif
+  
 class NoloDevice {
   public:
     NoloDevice(OSVR_PluginRegContext ctx,
@@ -51,6 +69,8 @@ class NoloDevice {
         /// Create the initialization options
         OSVR_DeviceInitOptions opts = osvrDeviceCreateInitOptions(ctx);
 
+	std::cout << "Nolo: opening " << path <<
+	  " for " << this << std::endl;
 	m_hid = hid_open_path(path);
 
         /// Indicate that we'll want 7 analog channels.
@@ -69,34 +89,45 @@ class NoloDevice {
         /// Register update callback
         m_dev.registerUpdateCallback(this);
     }
-
+    ~NoloDevice() {
+      std::cout << "Nolo: deleting " << this << std::endl;
+      hid_close(m_hid);
+    }
+  
     OSVR_ReturnCode update() {
       unsigned char buf[64];
-      const int cryptwords = (64-4)/4;
+      const int cryptwords = (64-4)/4, cryptoffset=1;
       static const uint32_t key[4] =
 	{0x875bcc51, 0xa7637a66, 0x50960967, 0xf8536c51};
       uint32_t cryptpart[cryptwords];
       int i;
 
       // TODO: timestamp frame received?
+      if (!m_hid)
+	 OSVR_RETURN_FAILURE;
+      //std::cout << "Reading HID data from " << m_hid << std::endl;
       if(hid_read(m_hid, buf, sizeof buf) != sizeof buf)
 	return OSVR_RETURN_FAILURE;
-	
+
+      //std::cout << "R ";
+      //hexdump(buf, sizeof buf);
       // Decrypt encrypted portion
       for (i=0; i<cryptwords; i++) {
 	cryptpart[i] =
-	  buf[3+4*i  ]<<24 |
-	  buf[3+4*i+1]<<16 |
-	  buf[3+4*i+2]<<8 |
-	  buf[3+4*i+3]<<0;
+	  ((uint32_t)buf[cryptoffset+4*i  ])<<0  |
+	  ((uint32_t)buf[cryptoffset+4*i+1])<<8  |
+	  ((uint32_t)buf[cryptoffset+4*i+2])<<16 |
+	  ((uint32_t)buf[cryptoffset+4*i+3])<<24;
       }
       btea_decrypt(cryptpart, cryptwords, 1, key);
       for (i=0; i<cryptwords; i++) {
-	buf[3+4*i  ] = cryptpart[i]>>24;
-	buf[3+4*i+1] = cryptpart[i]>>16;
-	buf[3+4*i+2] = cryptpart[i]>>8;
-	buf[3+4*i+3] = cryptpart[i]>>0;
+	buf[cryptoffset+4*i  ] = cryptpart[i]>>0;
+	buf[cryptoffset+4*i+1] = cryptpart[i]>>8;
+	buf[cryptoffset+4*i+2] = cryptpart[i]>>16;
+	buf[cryptoffset+4*i+3] = cryptpart[i]>>24;
       }
+      //std::cout << "D ";
+      //hexdump(buf, sizeof buf);
       
       switch (buf[0]) {
       case 0xa5:  // controllers frame
@@ -121,9 +152,10 @@ class NoloDevice {
   private:
     void decodePosition(const unsigned char *data,
 			OSVR_PositionState *pos) {
-      osvrVec3SetX(pos, (int16_t)(data[0]<<8 | data[1]));
-      osvrVec3SetY(pos, (int16_t)(data[2]<<8 | data[3]));
-      osvrVec3SetZ(pos,           data[4]<<8 | data[5]);
+      const double scale = 0.0001;
+      osvrVec3SetX(pos, scale * (int16_t)(data[0]<<8 | data[1]));
+      osvrVec3SetY(pos, scale * (int16_t)(data[2]<<8 | data[3]));
+      osvrVec3SetZ(pos, scale *          (data[4]<<8 | data[5]));
     }
     void decodeOrientation(const unsigned char *data,
 			   OSVR_OrientationState *quat) {
@@ -137,16 +169,22 @@ class NoloDevice {
       OSVR_PoseState pose;
       uint8_t buttons, bit;
 
-      if (data[0] != 2 || data[1] != 1)
+      if (data[0] != 2 || data[1] != 1) {
 	// Unknown version
+	/* Happens when controllers aren't on. 
+	std::cout << "Nolo: Unknown controller " << idx
+		  << " version " << (int)data[0] << " " << (int)data[1]
+		  << std::endl;
+	*/
 	return;
+      }
 
-      decodePosition(data+2, &pose.translation);
-      decodeOrientation(data+2+3*2, &pose.rotation);
+      decodePosition(data+3, &pose.translation);
+      decodeOrientation(data+3+3*2, &pose.rotation);
 
       osvrDeviceTrackerSendPose(m_dev, m_tracker, &pose, 2+idx);
       
-      buttons = data[2+3*2+4*2];
+      buttons = data[3+3*2+4*2];
       // TODO: report buttons for both controllers in one call?
       for (bit=0; bit<6; bit++)
 	osvrDeviceButtonSetValue(m_dev, m_button,
@@ -155,18 +193,24 @@ class NoloDevice {
       // next byte is touch ID bitmask (identical to buttons bit 5)
 
       // Touch X and Y coordinates
-      osvrDeviceAnalogSetValue(m_dev, m_analog, data[2+3*2+4*2+2],   idx*3+0);
-      osvrDeviceAnalogSetValue(m_dev, m_analog, data[2+3*2+4*2+2+1], idx*3+1);
+      osvrDeviceAnalogSetValue(m_dev, m_analog, data[3+3*2+4*2+2],   idx*3+0);
+      osvrDeviceAnalogSetValue(m_dev, m_analog, data[3+3*2+4*2+2+1], idx*3+1);
       // battery level
-      osvrDeviceAnalogSetValue(m_dev, m_analog, data[2+3*2+4*2+2+2], idx*3+2);
+      osvrDeviceAnalogSetValue(m_dev, m_analog, data[3+3*2+4*2+2+2], idx*3+2);
     }
     void decodeHeadsetMarkerCV1(unsigned char *data) {
       OSVR_PoseState pose;
       OSVR_PositionState home;
 
-      if (data[0] != 2 || data[1] != 1)
+      if (data[0] != 2 || data[1] != 1) {
+	/* Happens with corrupt packages (mixed with controller data)
+	std::cout << "Nolo: Unknown headset marker"
+		  << " version " << (int)data[0] << " " << (int)data[1]
+		  << std::endl;
+	*/
 	// Unknown version
 	return;
+      }
 
       decodePosition(data+3, &home);
       decodePosition(data+3+3*2, &pose.translation);
@@ -197,6 +241,10 @@ class HardwareDetection {
     HardwareDetection() : m_found(false) {}
     OSVR_ReturnCode operator()(OSVR_PluginRegContext ctx) {
 
+      // TODO: probe for new devices only
+      if (m_found)
+	return OSVR_RETURN_SUCCESS;
+
       struct hid_device_info *hid_devices, *cur_dev;
       hid_devices = hid_enumerate(0x0483, 0x5750);
       if (!hid_devices)
@@ -209,6 +257,7 @@ class HardwareDetection {
 	  /// Create our device object
 	  osvr::pluginkit::registerObjectForDeletion
 	    (ctx, new NoloDevice(ctx, cur_dev->path));
+	  m_found = true;
 	}
       }
       
@@ -224,6 +273,7 @@ class HardwareDetection {
 } // namespace
 
 OSVR_PLUGIN(com_osvr_Nolo) {
+    hid_init();
     osvr::pluginkit::PluginContext context(ctx);
 
     /// Register a detection callback function object.
