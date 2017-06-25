@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 2.8.12)
 project(NoloOSVRPlugin) # Change this line.
 
+# So we can find our FindHIDAPI.cmake file
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" "${LOCAL_CMAKE_MODULE_DIR}")
+
 # This looks for an osvrConfig.cmake file - most of the time it can be
 # autodetected but you might need to create/extend CMAKE_PREFIX_PATH to include something like
 # C:/Users/Ryan/Desktop/build/OSVR-Core-vc12 or
@@ -13,7 +16,7 @@ find_package(osvr REQUIRED)
 # The file must be added as a source file to some target (as below) to be generated.
 osvr_convert_json(com_osvr_Nolo_json
     com_osvr_Nolo.json
-    "${CMAKE_CURRENT_BINARY_DIR}/com_osvr_Nolo.h")
+    "${CMAKE_CURRENT_BINARY_DIR}/com_osvr_Nolo_json.h")
 
 # Be able to find our generated header file.
 include_directories("${CMAKE_CURRENT_BINARY_DIR}")
@@ -29,4 +32,6 @@ osvr_add_plugin(NAME com_osvr_Nolo
     "${CMAKE_CURRENT_BINARY_DIR}/com_osvr_Nolo_json.h")
 
 # If you use other libraries, find them and add a line like:
-# target_link_libraries(com_osvr_Nolo AnyOtherLibraries)
+find_package(HIDAPI REQUIRED)
+include_directories("${HIDAPI_INCLUDE_DIRS}")
+target_link_libraries(com_osvr_Nolo "${HIDAPI_LIBRARIES}")
