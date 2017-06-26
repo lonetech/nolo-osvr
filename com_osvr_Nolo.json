@@ -58,7 +58,8 @@
   },
   "semantic": {
     "hmd": {
-      "$target": "tracker/1"
+      "$target": "tracker/1",
+      "home": "tracker/0"
     },
     "controller": {
       "left": {

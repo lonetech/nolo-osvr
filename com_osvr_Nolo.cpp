@@ -159,11 +159,28 @@ class NoloDevice {
     }
     void decodeOrientation(const unsigned char *data,
 			   OSVR_OrientationState *quat) {
-      // TODO: normalize or rescale. Fix order.
-      osvrQuatSetW(quat, (int16_t)(data[0]<<8 | data[1]));
-      osvrQuatSetX(quat, (int16_t)(data[2]<<8 | data[3]));
-      osvrQuatSetY(quat, (int16_t)(data[4]<<8 | data[5]));
-      osvrQuatSetZ(quat, (int16_t)(data[6]<<8 | data[7]));
+      double w,i,j,k, scale;
+      // CV1 order
+      w = (int16_t)(data[0]<<8 | data[1]);
+      i = (int16_t)(data[2]<<8 | data[3]);
+      j = (int16_t)(data[4]<<8 | data[5]);
+      k = (int16_t)(data[6]<<8 | data[7]);
+      // Normalize (unknown if scale is constant)
+      //scale = 1.0/sqrt(i*i+j*j+k*k+w*w);
+      // Turns out it is fixed point. But the android driver author
+      // either didn't know, or didn't trust it.
+      // Unknown if normalizing it helps OSVR!
+      scale = 1.0 / 16384;
+      //std::cout << "Scale: " << scale << std::endl;
+      w *= scale;
+      i *= scale;
+      j *= scale;
+      k *= scale;
+      // Reorder
+      osvrQuatSetW(quat, w);
+      osvrQuatSetX(quat, i);
+      osvrQuatSetY(quat, k);
+      osvrQuatSetZ(quat, -j);
     }
     void decodeControllerCV1(int idx, unsigned char *data) {
       OSVR_PoseState pose;
@@ -199,9 +216,6 @@ class NoloDevice {
       osvrDeviceAnalogSetValue(m_dev, m_analog, data[3+3*2+4*2+2+2], idx*3+2);
     }
     void decodeHeadsetMarkerCV1(unsigned char *data) {
-      OSVR_PoseState pose;
-      OSVR_PositionState home;
-
       if (data[0] != 2 || data[1] != 1) {
 	/* Happens with corrupt packages (mixed with controller data)
 	std::cout << "Nolo: Unknown headset marker"
@@ -212,13 +226,18 @@ class NoloDevice {
 	return;
       }
 
-      decodePosition(data+3, &home);
-      decodePosition(data+3+3*2, &pose.translation);
-      decodeOrientation(data+3+2*3*2, &pose.rotation);
+      OSVR_PositionState home;
+      OSVR_PoseState hmd;
+      
+      decodePosition(data+3, &hmd.translation);
+      decodePosition(data+3+3*2, &home);
+      decodeOrientation(data+3+2*3*2+1, &hmd.rotation);
 
+      // Tracker viewer kept using the home for head.
+      // Something wrong with how they handle the descriptors. 
       osvrDeviceTrackerSendPosition(m_dev, m_tracker, &home, 0);
 
-      osvrDeviceTrackerSendPose(m_dev, m_tracker, &pose, 1);
+      osvrDeviceTrackerSendPose(m_dev, m_tracker, &hmd, 1);
     }
     void decodeBaseStationCV1(unsigned char *data) {
       if (data[0] != 2 || data[1] != 1)
