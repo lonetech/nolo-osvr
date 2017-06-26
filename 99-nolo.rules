@@ -1,0 +1,5 @@
+# Nolo CV1 VR tracker
+# 0483:5750
+# Note: That's an ST microcontroller default. Should look at the name too.
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="5750", ATTRS{manufacturer}=="LYRobotix", ATTRS{product}=="NOLO", MODE:="0660", GROUP:="plugdev"
+
