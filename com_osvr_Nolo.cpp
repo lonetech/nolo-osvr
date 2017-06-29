@@ -108,6 +108,7 @@ class NoloDevice {
       //std::cout << "Reading HID data from " << m_hid << std::endl;
       if(hid_read(m_hid, buf, sizeof buf) != sizeof buf)
 	return OSVR_RETURN_FAILURE;
+      osvrTimeValueGetNow(&m_lastreport_time);
 
       //std::cout << "R ";
       //hexdump(buf, sizeof buf);
@@ -199,21 +200,25 @@ class NoloDevice {
       decodePosition(data+3, &pose.translation);
       decodeOrientation(data+3+3*2, &pose.rotation);
 
-      osvrDeviceTrackerSendPose(m_dev, m_tracker, &pose, 2+idx);
+      osvrDeviceTrackerSendPoseTimestamped(m_dev, m_tracker, &pose, 2+idx, &m_lastreport_time);
       
       buttons = data[3+3*2+4*2];
       // TODO: report buttons for both controllers in one call?
       for (bit=0; bit<6; bit++)
-	osvrDeviceButtonSetValue(m_dev, m_button,
+	osvrDeviceButtonSetValueTimestamped(m_dev, m_button,
 				 (buttons & 1<<bit ? OSVR_BUTTON_PRESSED
-				  : OSVR_BUTTON_NOT_PRESSED), idx*6+bit);
+				  : OSVR_BUTTON_NOT_PRESSED), idx*6+bit,
+				 &m_lastreport_time);
       // next byte is touch ID bitmask (identical to buttons bit 5)
 
       // Touch X and Y coordinates
-      osvrDeviceAnalogSetValue(m_dev, m_analog, data[3+3*2+4*2+2],   idx*3+0);
-      osvrDeviceAnalogSetValue(m_dev, m_analog, data[3+3*2+4*2+2+1], idx*3+1);
+      osvrDeviceAnalogSetValueTimestamped(m_dev, m_analog, data[3+3*2+4*2+2],   idx*3+0,
+		      &m_lastreport_time);
+      osvrDeviceAnalogSetValueTimestamped(m_dev, m_analog, data[3+3*2+4*2+2+1], idx*3+1,
+		      &m_lastreport_time);
       // battery level
-      osvrDeviceAnalogSetValue(m_dev, m_analog, data[3+3*2+4*2+2+2], idx*3+2);
+      osvrDeviceAnalogSetValueTimestamped(m_dev, m_analog, data[3+3*2+4*2+2+2], idx*3+2,
+		      &m_lastreport_time);
     }
     void decodeHeadsetMarkerCV1(unsigned char *data) {
       if (data[0] != 2 || data[1] != 1) {
@@ -235,16 +240,19 @@ class NoloDevice {
 
       // Tracker viewer kept using the home for head.
       // Something wrong with how they handle the descriptors. 
-      osvrDeviceTrackerSendPosition(m_dev, m_tracker, &home, 0);
+      osvrDeviceTrackerSendPositionTimestamped(m_dev, m_tracker, &home, 0,
+		      &m_lastreport_time);
 
-      osvrDeviceTrackerSendPose(m_dev, m_tracker, &hmd, 1);
+      osvrDeviceTrackerSendPoseTimestamped(m_dev, m_tracker, &hmd, 1,
+		      &m_lastreport_time);
     }
     void decodeBaseStationCV1(unsigned char *data) {
       if (data[0] != 2 || data[1] != 1)
 	// Unknown version
 	return;
 
-      osvrDeviceAnalogSetValue(m_dev, m_analog, data[2], 2*3);
+      osvrDeviceAnalogSetValueTimestamped(m_dev, m_analog, data[2], 2*3,
+		      &m_lastreport_time);
     }
   
     static const int controllerLength = 3 + (3+4)*2 + 2 + 2 + 1;
@@ -253,6 +261,7 @@ class NoloDevice {
     OSVR_AnalogDeviceInterface m_analog;
     OSVR_ButtonDeviceInterface m_button;
     OSVR_TrackerDeviceInterface m_tracker;
+    OSVR_TimeValue m_lastreport_time;
 };
 
 class HardwareDetection {
