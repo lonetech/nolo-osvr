@@ -3,7 +3,7 @@ nolo-vr is an OSVR plugin for LYRobotix Nolo VR tracker system.
 
 # Requirements
 * [OSVR Core](https://github.com/OSVR/OSVR-Core) - The core libraries for the OSVR software.
-* [hidapi](Thehttps://github.com/signal11/hidapi) - A USB Library.
+* [hidapi](https://github.com/signal11/hidapi) - A USB Library.
 
 The following are tools for creating an automated development environment:
 * Arch - [Arch wiki](https://wiki.archlinux.org/index.php/Virtual_reality#OSVR)
