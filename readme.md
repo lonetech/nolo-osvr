@@ -33,16 +33,11 @@ Run the following:
 ## udev rules
 The udev rules need to be added to /etc/udev/rules.d
 
-```
-sudo cp 99-nolo.rules /etc/udev/rules.d/.
-```
+``` sudo cp 99-nolo.rules /etc/udev/rules.d/.  ```
 
 Run the following command to update udev.
 
-```
-sudo udevadm trigger
-
-```
+``` sudo udevadm trigger ```
 
 ## nolo configuration
 The nolo configuration file should be copied to the osvr directory.
