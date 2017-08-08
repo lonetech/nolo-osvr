@@ -1,5 +1,5 @@
 # About 
-nolo-vr is an OSVR plugin for LYRobotix Nolo VR tracker system.
+nolo-osvr is an OSVR plugin for LYRobotix Nolo VR tracker system.
 
 # Requirements
 * [OSVR Core](https://github.com/OSVR/OSVR-Core) - The core libraries for the OSVR software.
@@ -79,7 +79,7 @@ Press `Configure` again. Hopefully all errors are gone. Press `Generate` then `O
 
 Build as you normally would in VS. Remember if Releasing to right-click the `INSTALL` project, select properties, open Configuration Manager, and change active solution configuration to `RelWithDebInfo`.
 
-**DO NOT RELEASE WITH THE CONFIGURATION SET TO "RELEASE"**. For some reason, it most versions of VS this will cause the plugin to silently fail to load, even though it will build correctly.
+**DO NOT BUILD WITH THE CONFIGURATION SET TO "RELEASE"**. For some reason, it most versions of VS this will cause the plugin to silently fail to load, even though it will build correctly.
 
 # Installation
 
@@ -91,5 +91,5 @@ To-do
 
 Copy `hidapi.dll` from `your-hidapi-directory\windows\x64\Release` into `your-OSVR-Core-directory\bin`
 
-Copy `com_osvr_Nolo.dll` into your-OSVR-Core-director\bin\osvr-plugins-0`
+Copy `com_osvr_Nolo.dll` into `your-OSVR-Core-director\bin\osvr-plugins-0`
 
