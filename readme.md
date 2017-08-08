@@ -63,25 +63,23 @@ Now build `hidapi` (from the Build menu in the toolbar or by right-clicking `hid
 
 Open the CMAKE gui and point the source line at top to your checked out repo. Point the build directory where you want the VS project files to go.
 
-Press `Add Entry` and input `CMAKE_PREFIX_PATH` as the name. Set the Type to path, and in the Value field include the paths to the OSVR SDK and the NoloVR SDK. This *should* be all you need, but you might need to include additional paths (after downloading their respective libraries) if you get an error asking for libfunctionality or Boost. Look through OSVR-Core documentation for instructions on these.
-
-If you encounter strange, nearly silent build errors, it may be that OSVR-Core was detected in the wrong directory by CMAKE. 
-
-The easiest way to fix this is to check the osvr_DIR entry in CMAKE and ensure it is set to an installation of the SDK binaries downloaded from https://osvr.github.io/using/.
-
 Press `Configure`.
 
-You will get an error that says HIDAPI cannot be found. This is expected. If you get any other errors, see the above comment about adding paths to Boost etc.
+You may get errors that say certain dependencies cannot be found. If CMAKE can't find them automatically, here's a list of where to point them to as they appear:
 
-To resolve the HIDAPI error, select the `HIDAPI_INCLUDE_DIR` entry and point it to `your-hidapi-dir\hidapi\`, the foldering containing `hidapi.h`
+Key | Directory
+------------ | -------------
+osvr_DIR | Find your OSVR SDK, then point to x64\lib\cmake\osvr
+libfunctionality_DIR | Find your OSVR SDK, then point to x64\lib\cmake\libfunctionality
+HIDAPI_INCLUDE_DIR | Find your HIDAPI install directory, then point to the hidapi subfolder (contains hidapi.h)
+HIDAPI_LIBRARY | Find your HIDAPI install directory, then point to windows\x64\Release\hidapi.lib
 
-Then select the `HIDAPI_LIBRARY` entry and point it to `hidapi.lib` in `your-hidapi-dir\Windows\x64\Release`
-
-This error seems to be the result of an issue with a CMAKE file, but I can't seem to fix it. Perhaps an expert can submit a PR.
 
 Press `Configure` again. Hopefully all errors are gone. Press `Generate` then `Open Project`
 
-Build as you normally would in VS. Remember if Releasing to right-click the `INSTALL` project, select properties, open Configuration Manager, and change active solution configuration to `Release` or `RelWithDebInfo`.
+Build as you normally would in VS. Remember if Releasing to right-click the `INSTALL` project, select properties, open Configuration Manager, and change active solution configuration to `RelWithDebInfo`.
+
+**DO NOT RELEASE WITH THE CONFIGURATION SET TO "RELEASE"**. For some reason, it most versions of VS this will cause the plugin to silently fail to load, even though it will build correctly.
 
 # Installation
 
