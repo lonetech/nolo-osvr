@@ -65,6 +65,10 @@ Open the CMAKE gui and point the source line at top to your checked out repo. Po
 
 Press `Add Entry` and input `CMAKE_PREFIX_PATH` as the name. Set the Type to path, and in the Value field include the paths to the OSVR SDK and the NoloVR SDK. This *should* be all you need, but you might need to include additional paths (after downloading their respective libraries) if you get an error asking for libfunctionality or Boost. Look through OSVR-Core documentation for instructions on these.
 
+If you encounter strange, nearly silent build errors, it may be that OSVR-Core was detected in the wrong directory by CMAKE. 
+
+The easiest way to fix this is to check the osvr_DIR entry in CMAKE and ensure it is set to an installation of the SDK binaries downloaded from https://osvr.github.io/using/.
+
 Press `Configure`.
 
 You will get an error that says HIDAPI cannot be found. This is expected. If you get any other errors, see the above comment about adding paths to Boost etc.
