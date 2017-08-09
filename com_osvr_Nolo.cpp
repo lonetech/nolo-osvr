@@ -62,6 +62,8 @@ namespace {
   };
   #endif
   
+static int NUM_AXIS    = 4;
+static int NUM_BUTTONS = 6;
 class NoloDevice {
   public:
     NoloDevice(OSVR_PluginRegContext ctx,
@@ -76,9 +78,9 @@ class NoloDevice {
         /// Indicate that we'll want 7 analog channels.
         //osvrDeviceAnalogConfigure(opts, &m_analog, 2*3+1);
 	// update this to 9 analog channels to include the trigger
-        osvrDeviceAnalogConfigure(opts, &m_analog, 9);
+        osvrDeviceAnalogConfigure(opts, &m_analog, NUM_AXIS*2+1);
 	/// And 6 buttons per controller
-        osvrDeviceButtonConfigure(opts, &m_button, 2*6);
+        osvrDeviceButtonConfigure(opts, &m_button, 2*NUM_BUTTONS);
 	/// And tracker capability
         osvrDeviceTrackerConfigure(opts, &m_tracker);
 
@@ -188,7 +190,7 @@ class NoloDevice {
     void decodeControllerCV1(int idx, unsigned char *data) {
       OSVR_PoseState pose;
       uint8_t buttons, bit;
-      int trigger_pressed;
+      int trigger_pressed = 0;
 
       if (data[0] != 2 || data[1] != 1) {
 	// Unknown version
@@ -207,7 +209,7 @@ class NoloDevice {
       
       buttons = data[3+3*2+4*2];
       // TODO: report buttons for both controllers in one call?
-      for (bit=0; bit<6; bit++){
+      for (bit=0; bit<NUM_BUTTONS; bit++){
 	osvrDeviceButtonSetValueTimestamped(m_dev, m_button,
 				 (buttons & 1<<bit ? OSVR_BUTTON_PRESSED
 				  : OSVR_BUTTON_NOT_PRESSED), idx*6+bit,
@@ -230,19 +232,18 @@ class NoloDevice {
       // z = 2*(x/255) -1
       // normalize 0 to 1
       // x/255
-
       double axis_value = 2*data[3+3*2+4*2+2]/255.0 - 1;
       // invert axis
       axis_value *= -1;
-      osvrDeviceAnalogSetValueTimestamped(m_dev, m_analog, axis_value,   idx*3+0, &m_lastreport_time);
+      osvrDeviceAnalogSetValueTimestamped(m_dev, m_analog, axis_value,   idx*NUM_AXIS+0, &m_lastreport_time);
       axis_value = 2*((int)data[3+3*2+4*2+2+1])/255.0 -1;
       axis_value *= -1;
-      osvrDeviceAnalogSetValueTimestamped(m_dev, m_analog, axis_value, idx*3+1, &m_lastreport_time);
+      osvrDeviceAnalogSetValueTimestamped(m_dev, m_analog, axis_value, idx*NUM_AXIS+1, &m_lastreport_time);
+      // trigger
+      osvrDeviceAnalogSetValueTimestamped(m_dev, m_analog, trigger_pressed, idx*NUM_AXIS+2, &m_lastreport_time);
       // battery level
       axis_value = data[3+3*2+4*2+2+2]/255.0; 
-      osvrDeviceAnalogSetValueTimestamped(m_dev, m_analog, axis_value, idx*3+2, &m_lastreport_time);
-      // trigger
-      osvrDeviceAnalogSetValueTimestamped(m_dev, m_analog, trigger_pressed, idx*3+3, &m_lastreport_time);
+      osvrDeviceAnalogSetValueTimestamped(m_dev, m_analog, axis_value, idx*NUM_AXIS+3, &m_lastreport_time);
       /*
       osvrDeviceAnalogSetValueTimestamped(m_dev, m_analog, data[3+3*2+4*2+2],   idx*3+0, &m_lastreport_time);
       osvrDeviceAnalogSetValueTimestamped(m_dev, m_analog, data[3+3*2+4*2+2+1], idx*3+1, &m_lastreport_time);

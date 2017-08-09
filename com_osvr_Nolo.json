@@ -85,9 +85,9 @@
         },
         "trigger": {
           "button": "button/1",
-          "z": "analog/3"
+          "$target": "analog/2"
         },
-        "battery": "analog/2"
+        "battery": "analog/3"
       },
       "right": {
         "$target": "tracker/3",
@@ -102,9 +102,9 @@
         },
         "trigger": {
           "button": "button/7",
-          "z": "analog/7"
+          "$target": "analog/6"
         },
-        "battery": "analog/6"
+        "battery": "analog/7"
       }
     },
     "base": {
