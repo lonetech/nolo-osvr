@@ -282,7 +282,7 @@ class NoloDevice {
 	// Unknown version
 	return;
 
-      osvrDeviceAnalogSetValueTimestamped(m_dev, m_analog, data[2], 2*3,
+      osvrDeviceAnalogSetValueTimestamped(m_dev, m_analog, data[2], 2*NUM_AXIS,
 		      &m_lastreport_time);
     }
   
