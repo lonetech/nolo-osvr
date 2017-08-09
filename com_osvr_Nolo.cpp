@@ -244,12 +244,6 @@ class NoloDevice {
       // battery level
       axis_value = data[3+3*2+4*2+2+2]/255.0; 
       osvrDeviceAnalogSetValueTimestamped(m_dev, m_analog, axis_value, idx*NUM_AXIS+3, &m_lastreport_time);
-      /*
-      osvrDeviceAnalogSetValueTimestamped(m_dev, m_analog, data[3+3*2+4*2+2],   idx*3+0, &m_lastreport_time);
-      osvrDeviceAnalogSetValueTimestamped(m_dev, m_analog, data[3+3*2+4*2+2+1], idx*3+1, &m_lastreport_time);
-      // battery level
-      osvrDeviceAnalogSetValueTimestamped(m_dev, m_analog, data[3+3*2+4*2+2+2], idx*3+2, &m_lastreport_time);
-      */
     }
     void decodeHeadsetMarkerCV1(unsigned char *data) {
       if (data[0] != 2 || data[1] != 1) {
