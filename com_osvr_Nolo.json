@@ -108,7 +108,7 @@
       }
     },
     "base": {
-      "battery": "analog/6"
+      "battery": "analog/8"
     }
   },
   "automaticAliases": {

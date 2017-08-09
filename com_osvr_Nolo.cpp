@@ -188,6 +188,7 @@ class NoloDevice {
     void decodeControllerCV1(int idx, unsigned char *data) {
       OSVR_PoseState pose;
       uint8_t buttons, bit;
+      int trigger_pressed;
 
       if (data[0] != 2 || data[1] != 1) {
 	// Unknown version
@@ -206,11 +207,19 @@ class NoloDevice {
       
       buttons = data[3+3*2+4*2];
       // TODO: report buttons for both controllers in one call?
-      for (bit=0; bit<6; bit++)
+      for (bit=0; bit<6; bit++){
 	osvrDeviceButtonSetValueTimestamped(m_dev, m_button,
 				 (buttons & 1<<bit ? OSVR_BUTTON_PRESSED
 				  : OSVR_BUTTON_NOT_PRESSED), idx*6+bit,
 				 &m_lastreport_time);
+	if(bit == 1){
+	    if(buttons & 1<<bit){
+		trigger_pressed = 1;
+	    }else{
+		trigger_pressed = 0;
+	    }
+	}
+      }
       // next byte is touch ID bitmask (identical to buttons bit 5)
 
       // Touch X and Y coordinates
@@ -233,8 +242,7 @@ class NoloDevice {
       axis_value = data[3+3*2+4*2+2+2]/255.0; 
       osvrDeviceAnalogSetValueTimestamped(m_dev, m_analog, axis_value, idx*3+2, &m_lastreport_time);
       // trigger
-      axis_value = data[3+3*2+4*2+2+3]/255.0; 
-      osvrDeviceAnalogSetValueTimestamped(m_dev, m_analog, axis_value, idx*3+3, &m_lastreport_time);
+      osvrDeviceAnalogSetValueTimestamped(m_dev, m_analog, trigger_pressed, idx*3+3, &m_lastreport_time);
       /*
       osvrDeviceAnalogSetValueTimestamped(m_dev, m_analog, data[3+3*2+4*2+2],   idx*3+0, &m_lastreport_time);
       osvrDeviceAnalogSetValueTimestamped(m_dev, m_analog, data[3+3*2+4*2+2+1], idx*3+1, &m_lastreport_time);
