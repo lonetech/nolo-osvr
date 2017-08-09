@@ -13,7 +13,7 @@
       "traits": [{"orientation": false}]
     },
     "analog": {
-      "count": 7,
+      "count": 9,
       "traits": [
         {
           "min": -1,
@@ -31,6 +31,11 @@
           "rest": 1
         },
         {
+          "min": 0,
+          "max": 1,
+          "rest": 1
+        },
+        {
           "min": -1,
           "max": 1,
           "rest": 0 
@@ -39,6 +44,11 @@
           "min": -1,
           "max": 1,
           "rest": 0
+        },
+        {
+          "min": 0,
+          "max": 1,
+          "rest": 1
         },
         {
           "min": 0,
@@ -74,7 +84,8 @@
           "button": "button/0"
         },
         "trigger": {
-          "button": "button/1"
+          "button": "button/1",
+          "z": "analog/3"
         },
         "battery": "analog/2"
       },
@@ -84,15 +95,16 @@
         "menu": "button/8",
         "grip": "button/10",
         "trackpad": {
-          "x": "analog/3",
-          "y": "analog/4",
+          "x": "analog/4",
+          "y": "analog/5",
           "touch": "button/11",
           "button": "button/6"
         },
         "trigger": {
-          "button": "button/7"
+          "button": "button/7",
+          "z": "analog/7"
         },
-        "battery": "analog/5"
+        "battery": "analog/6"
       }
     },
     "base": {

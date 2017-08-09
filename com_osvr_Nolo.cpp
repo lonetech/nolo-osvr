@@ -74,7 +74,9 @@ class NoloDevice {
 	m_hid = hid_open_path(path);
 
         /// Indicate that we'll want 7 analog channels.
-        osvrDeviceAnalogConfigure(opts, &m_analog, 2*3+1);
+        //osvrDeviceAnalogConfigure(opts, &m_analog, 2*3+1);
+	// update this to 9 analog channels to include the trigger
+        osvrDeviceAnalogConfigure(opts, &m_analog, 9);
 	/// And 6 buttons per controller
         osvrDeviceButtonConfigure(opts, &m_button, 2*6);
 	/// And tracker capability
@@ -213,7 +215,7 @@ class NoloDevice {
 
       // Touch X and Y coordinates
       // //assumes 0 to 255
-      // normilize from -1 to 1
+      // normalize from -1 to 1
       // z = 2*[x - min / (max - min) - 1]
       // z = 2*(x - 0 / (255 - 0) - 1]
       // z = 2*(x/255) -1
@@ -230,6 +232,9 @@ class NoloDevice {
       // battery level
       axis_value = data[3+3*2+4*2+2+2]/255.0; 
       osvrDeviceAnalogSetValueTimestamped(m_dev, m_analog, axis_value, idx*3+2, &m_lastreport_time);
+      // trigger
+      axis_value = data[3+3*2+4*2+2+3]/255.0; 
+      osvrDeviceAnalogSetValueTimestamped(m_dev, m_analog, axis_value, idx*3+3, &m_lastreport_time);
       /*
       osvrDeviceAnalogSetValueTimestamped(m_dev, m_analog, data[3+3*2+4*2+2],   idx*3+0, &m_lastreport_time);
       osvrDeviceAnalogSetValueTimestamped(m_dev, m_analog, data[3+3*2+4*2+2+1], idx*3+1, &m_lastreport_time);
