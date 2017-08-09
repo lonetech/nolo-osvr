@@ -212,13 +212,30 @@ class NoloDevice {
       // next byte is touch ID bitmask (identical to buttons bit 5)
 
       // Touch X and Y coordinates
-      osvrDeviceAnalogSetValueTimestamped(m_dev, m_analog, data[3+3*2+4*2+2],   idx*3+0,
-		      &m_lastreport_time);
-      osvrDeviceAnalogSetValueTimestamped(m_dev, m_analog, data[3+3*2+4*2+2+1], idx*3+1,
-		      &m_lastreport_time);
+      // //assumes 0 to 255
+      // normilize from -1 to 1
+      // z = 2*[x - min / (max - min) - 1]
+      // z = 2*(x - 0 / (255 - 0) - 1]
+      // z = 2*(x/255) -1
+      // normalize 0 to 1
+      // x/255
+
+      double axis_value = 2*data[3+3*2+4*2+2]/255.0 - 1;
+      // invert axis
+      axis_value *= -1;
+      osvrDeviceAnalogSetValueTimestamped(m_dev, m_analog, axis_value,   idx*3+0, &m_lastreport_time);
+      axis_value = 2*((int)data[3+3*2+4*2+2+1])/255.0 -1;
+      axis_value *= -1;
+      osvrDeviceAnalogSetValueTimestamped(m_dev, m_analog, axis_value, idx*3+1, &m_lastreport_time);
       // battery level
-      osvrDeviceAnalogSetValueTimestamped(m_dev, m_analog, data[3+3*2+4*2+2+2], idx*3+2,
-		      &m_lastreport_time);
+      axis_value = data[3+3*2+4*2+2+2]/255.0; 
+      osvrDeviceAnalogSetValueTimestamped(m_dev, m_analog, axis_value, idx*3+2, &m_lastreport_time);
+      /*
+      osvrDeviceAnalogSetValueTimestamped(m_dev, m_analog, data[3+3*2+4*2+2],   idx*3+0, &m_lastreport_time);
+      osvrDeviceAnalogSetValueTimestamped(m_dev, m_analog, data[3+3*2+4*2+2+1], idx*3+1, &m_lastreport_time);
+      // battery level
+      osvrDeviceAnalogSetValueTimestamped(m_dev, m_analog, data[3+3*2+4*2+2+2], idx*3+2, &m_lastreport_time);
+      */
     }
     void decodeHeadsetMarkerCV1(unsigned char *data) {
       if (data[0] != 2 || data[1] != 1) {

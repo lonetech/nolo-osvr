@@ -1,0 +1,4 @@
+*.swp
+CMakeFiles/
+build/
+nbproject/

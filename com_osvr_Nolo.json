@@ -16,39 +16,39 @@
       "count": 7,
       "traits": [
         {
-          "min": 0,
-          "max": 255,
-          "rest": 255
+          "min": -1,
+          "max": 1,
+          "rest": 0
+        },
+        {
+          "min": -1,
+          "max": 1,
+          "rest": 0
         },
         {
           "min": 0,
-          "max": 255,
-          "rest": 255
+          "max": 1,
+          "rest": 1
+        },
+        {
+          "min": -1,
+          "max": 1,
+          "rest": 0 
+        },
+        {
+          "min": -1,
+          "max": 1,
+          "rest": 0
         },
         {
           "min": 0,
-          "max": 100,
-          "rest": 100
+          "max": 1,
+          "rest": 1
         },
         {
           "min": 0,
-          "max": 255,
-          "rest": 255
-        },
-        {
-          "min": 0,
-          "max": 255,
-          "rest": 255
-        },
-        {
-          "min": 0,
-          "max": 100,
-          "rest": 100
-        },
-        {
-          "min": 0,
-          "max": 100,
-          "rest": 100
+          "max": 1,
+          "rest": 1
         }
       ]
     },
