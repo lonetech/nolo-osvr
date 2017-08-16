@@ -232,8 +232,9 @@ class NoloDevice {
       // z = 2*(x/255) -1
       // normalize 0 to 1
       // x/255
+      double axis_value;
       if (data[3+3*2+4*2+1]) {  // Only report touch if there is one
-        double axis_value = 2*data[3+3*2+4*2+2]/255.0 - 1;
+        axis_value = 2*data[3+3*2+4*2+2]/255.0 - 1;
         // invert axis
         axis_value *= -1;
         osvrDeviceAnalogSetValueTimestamped(m_dev, m_analog, axis_value,   idx*NUM_AXIS+0, &m_lastreport_time);
