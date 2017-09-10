@@ -37,6 +37,7 @@
 // Standard includes
 #include <iostream>
 #include <wchar.h>
+#include <string.h>
 
 // Anonymous namespace to avoid symbol collision
 namespace {
@@ -92,6 +93,8 @@ class NoloDevice {
 
         /// Register update callback
         m_dev.registerUpdateCallback(this);
+
+	memset(&oldreports[0][0], 0, sizeof oldreports);
     }
     ~NoloDevice() {
       std::cout << "Nolo: deleting " << this << std::endl;
@@ -114,6 +117,18 @@ class NoloDevice {
 	return OSVR_RETURN_FAILURE;
       osvrTimeValueGetNow(&m_lastreport_time);
 
+      // Check for duplicate reports before decrypting
+      switch (buf[0]) {
+	case 0xa5:
+	case 0xa6:
+	  if (memcmp(oldreports[buf[0]-0xa5], buf, sizeof buf))
+	    memcpy(oldreports[buf[0]-0xa5], buf, sizeof buf);
+	  else
+	    return OSVR_RETURN_SUCCESS;	// Duplicate report
+	  break;
+	default:
+	  return OSVR_RETURN_SUCCESS; // Unknown report
+      }
       //std::cout << "R ";
       //hexdump(buf, sizeof buf);
       // Decrypt encrypted portion
@@ -155,6 +170,7 @@ class NoloDevice {
     }
   
   private:
+    unsigned char oldreports[2][64];
     void decodePosition(const unsigned char *data,
 			OSVR_PositionState *pos) {
       const double scale = 0.0001;
