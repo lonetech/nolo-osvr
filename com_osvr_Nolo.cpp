@@ -204,11 +204,22 @@ class NoloDevice {
       osvrQuatSetZ(quat, -j);
     }
     void decodeControllerCV1(int idx, unsigned char *data) {
+      enum ControllerOffsets {
+	    hwversion   = 0,	// guessed!
+	    fwversion   = 1,
+	    position    = 3,
+	    orientation = 3+3*2,
+	    ofsbuttons  = 3+3*2+4*2,
+	    touchid     = 3+3*2+4*2+1,
+	    touchx      = 3+3*2+4*2+2,
+	    touchy      = 3+3*2+4*2+3,
+	    battery     = 3+3*2+4*2+4,
+      };
       OSVR_PoseState pose;
       uint8_t buttons, bit;
       int trigger_pressed = 0;
 
-      if (data[0] != 2 || data[1] != 1) {
+      if (data[hwversion] != 2 || data[fwversion] != 1) {
 	// Unknown version
 	/* Happens when controllers aren't on. 
 	std::cout << "Nolo: Unknown controller " << idx
@@ -218,12 +229,12 @@ class NoloDevice {
 	return;
       }
 
-      decodePosition(data+3, &pose.translation);
-      decodeOrientation(data+3+3*2, &pose.rotation);
+      decodePosition(data+position, &pose.translation);
+      decodeOrientation(data+orientation, &pose.rotation);
 
       osvrDeviceTrackerSendPoseTimestamped(m_dev, m_tracker, &pose, 2+idx, &m_lastreport_time);
       
-      buttons = data[3+3*2+4*2];
+      buttons = data[ofsbuttons];
       // TODO: report buttons for both controllers in one call?
       for (bit=0; bit<NUM_BUTTONS; bit++){
 	osvrDeviceButtonSetValueTimestamped(m_dev, m_button,
@@ -249,23 +260,30 @@ class NoloDevice {
       // normalize 0 to 1
       // x/255
       double axis_value;
-      if (data[3+3*2+4*2+1]) {  // Only report touch if there is one
-        axis_value = 2*data[3+3*2+4*2+2]/255.0 - 1;
+      if (data[touchid]) {  // Only report touch if there is one
+        axis_value = 2*data[touchx]/255.0 - 1;
         // invert axis
         axis_value *= -1;
         osvrDeviceAnalogSetValueTimestamped(m_dev, m_analog, axis_value,   idx*NUM_AXIS+0, &m_lastreport_time);
-        axis_value = 2*((int)data[3+3*2+4*2+2+1])/255.0 -1;
+        axis_value = 2*((int)data[touchy])/255.0 -1;
         axis_value *= -1;
         osvrDeviceAnalogSetValueTimestamped(m_dev, m_analog, axis_value, idx*NUM_AXIS+1, &m_lastreport_time);
       }
-      // trigger
+      // trigger (emulated analog axis)
       osvrDeviceAnalogSetValueTimestamped(m_dev, m_analog, trigger_pressed, idx*NUM_AXIS+2, &m_lastreport_time);
       // battery level
-      axis_value = data[3+3*2+4*2+2+2]/255.0; 
+      axis_value = data[battery]/255.0; 
       osvrDeviceAnalogSetValueTimestamped(m_dev, m_analog, axis_value, idx*NUM_AXIS+3, &m_lastreport_time);
     }
     void decodeHeadsetMarkerCV1(unsigned char *data) {
-      if (data[0] != 2 || data[1] != 1) {
+      enum MarkerOffsets {
+	    hwversion    = 0,	// guessed!
+	    fwversion    = 1,
+	    position     = 3,
+	    homeposition = 3+3*2,
+	    orientation  = 3+2*3*2+1,
+      };
+      if (data[hwversion] != 2 || data[fwversion] != 1) {
 	/* Happens with corrupt packages (mixed with controller data)
 	std::cout << "Nolo: Unknown headset marker"
 		  << " version " << (int)data[0] << " " << (int)data[1]
@@ -278,9 +296,9 @@ class NoloDevice {
       OSVR_PositionState home;
       OSVR_PoseState hmd;
       
-      decodePosition(data+3, &hmd.translation);
-      decodePosition(data+3+3*2, &home);
-      decodeOrientation(data+3+2*3*2+1, &hmd.rotation);
+      decodePosition(data+position, &hmd.translation);
+      decodePosition(data+homeposition, &home);
+      decodeOrientation(data+orientation, &hmd.rotation);
 
       // Tracker viewer kept using the home for head.
       // Something wrong with how they handle the descriptors. 
@@ -291,11 +309,16 @@ class NoloDevice {
 		      &m_lastreport_time);
     }
     void decodeBaseStationCV1(unsigned char *data) {
-      if (data[0] != 2 || data[1] != 1)
+      enum MarkerOffsets {
+	    hwversion = 0,	// guessed!
+	    fwversion = 1,
+	    battery   = 2
+      };
+      if (data[hwversion] != 2 || data[fwversion] != 1)
 	// Unknown version
 	return;
 
-      osvrDeviceAnalogSetValueTimestamped(m_dev, m_analog, data[2], 2*NUM_AXIS,
+      osvrDeviceAnalogSetValueTimestamped(m_dev, m_analog, data[battery], 2*NUM_AXIS,
 		      &m_lastreport_time);
     }
   
